@@ -4,8 +4,8 @@ from PIL import Image
 from certificat import Certificat
 
 class ServeurApplicatif:
-    def __init__(self, stegano:Steganographie, cle_privee:str):
-        self.stegano= stegano
+    def __init__(self, steganographie:Steganographie, cle_privee:str):
+        self.stegano= steganographie
         self.cle_privee= cle_privee
 
     def obtenir_timestamp()-> int:
