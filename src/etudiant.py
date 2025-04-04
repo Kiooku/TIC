@@ -7,7 +7,7 @@ class Etudiant:
         self.prenom=prenom
         self.certificat=certificat
     
-    def demander_certificat(mdp:str) -> Image :
+    def demander_certificat(self,mdp:str) -> Image :
         pass
 
 
