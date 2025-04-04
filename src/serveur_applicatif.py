@@ -1,4 +1,4 @@
-from stegano import Steganographie
+from steganographie import Steganographie
 from etudiant import Etudiant
 from PIL import Image
 from certificat import Certificat
