@@ -56,7 +56,7 @@ class Steganographie:
 
 
 if __name__ == "__main__":
-    stega: Steganographie = Steganographie()
+    stegano: Steganographie = Steganographie()
     # Valeurs par defaut
     nom_defaut = os.path.abspath("tests/surprise.png")
     message_defaut = "Locks"
