@@ -32,7 +32,7 @@ class Steganographie:
             posx_pixel += 1
             if (posx_pixel == dimX):
                 posx_pixel = 0
-            posy_pixel += 1
+                posy_pixel += 1
             assert(posy_pixel < dimY)
 
 
@@ -58,11 +58,11 @@ class Steganographie:
 if __name__ == "__main__":
     stega: Steganographie = Steganographie()
     # Valeurs par defaut
-    nom_defaut = os.path.abspath("tests/surprise.jpg")
-    message_defaut = "Hello world"
+    nom_defaut = os.path.abspath("tests/surprise.png")
+    message_defaut = "Locks"
     choix_defaut = 1
     # programme de demonstration
-    saisie = input("Entrez l'operation 1) cacher 2) retrouver [%d]"%choix_defaut)
+    saisie = input("Entrez l'operation 1) cacher; 2) retrouver [%d]"%choix_defaut)
     choix = saisie or choix_defaut
 
     if choix == 1:
@@ -73,12 +73,13 @@ if __name__ == "__main__":
         print ("Longueur message : ",len(message_a_traiter))
         mon_image = Image.open(nom_fichier)
         stega.cacher(mon_image, message_a_traiter)
-        mon_image.save("stegano_surprise.jpg")
-    else :
+        mon_image.save(os.path.abspath("tests/stegano_surprise.png"))
+    else:
+        nom_defaut = os.path.abspath("tests/stegano_surprise.png")
         saisie = input("Entrez le nom du fichier [%s]"%nom_defaut)
         nom_fichier = saisie or nom_defaut
         saisie = input("Entrez la taille du message ")
         message_a_traiter = int(saisie)
         mon_image = Image.open(nom_fichier)
         message_retrouve = stega.recuperer(mon_image, message_a_traiter)
-        print (message_retrouve)
+        print(message_retrouve)
