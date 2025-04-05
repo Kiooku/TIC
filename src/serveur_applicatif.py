@@ -2,7 +2,7 @@ from steganographie import Steganographie
 from etudiant import Etudiant
 from PIL import Image
 from certificat import Certificat
-
+import sys, os
 import subprocess
 import qrcode
 
@@ -11,22 +11,28 @@ class ServeurApplicatif:
         self.stegano= steganographie
         self.cle_privee= cle_privee
 
-    def obtenir_timestamp(self)-> int:
-        pass
+    def obtenir_timestamp(self, nom_certificat: str):
+        commande=subprocess.Popen(f'openssl ts -query -data {nom_certificat} -no_nonce -sha512 -cert -out ./src/cert/certFreeTSA/certificat.tsq', shell=True,stdout=subprocess.PIPE)
+        (resultat, ignorer) = commande.communicate()
+        commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/certificat.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/certificat.tsr", shell=True,stdout=subprocess.PIPE)
+        (resultat, ignorer) = commande.communicate()
+        # commande=subprocess.Popen(f"openssl ts -verify -in file.tsr -queryfile cert/certFreeTSA/certificat.tsq -CAfile cert/certFreeTSA/cacert.pem -untrusted cert/certFreeTSA/tsa.crt", shell=True,stdout=subprocess.PIPE)
+        # (resultat, ignorer) = commande.communicate()
+
 
     def creation_certificat(self, etudiant: Etudiant,signature:str)-> Image:
         commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 56 label:"{etudiant.certificat.intitule}\n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white img/texte.png', shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         self.creer_qrcode(signature) 
-        commande=subprocess.Popen("composite -gravity center img/texte.png img/fond_attestation.png img/combinaison.png", shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen("composite -gravity center ./src/img/texte.png ./src/img/fond_attestation.png ./src/img/combinaison.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        commande=subprocess.Popen("composite -geometry +1418+934 img/qrcode.png img/combinaison.png img/attestation.png", shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen("composite -geometry +1418+934 ./src/img/qrcode.png ./src/img/combinaison.png ./src/img/attestation.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         #TODO modifier taille qr code et steganographie
 
 
     def creer_qrcode(self,signature:str):
-        nom_fichier = "img/qrcode.png"
+        nom_fichier = "./src/img/qrcode.png"
         qr = qrcode.make(signature)
         qr.save(nom_fichier, scale=2, border=0,)
 
@@ -50,3 +56,8 @@ if __name__ == "__main__":
     serveur_app=ServeurApplicatif(Steganographie(), "Iscia")
     print(serveur_app.creer_qrcode(signature))
     print(serveur_app.creation_certificat(etu,signature))
+    print(os.getcwd())
+    serveur_app.obtenir_timestamp("./src/img/attestation.png")
+    commande=subprocess.Popen(f"openssl ts -verify -in ./src/cert/certFreeTSA/certificat.tsr -queryfile ./src/cert/certFreeTSA/certificat.tsq -CAfile ./src/cert/certFreeTSA/cacert.pem -untrusted ./src/cert/certFreeTSA/tsa.crt", shell=True,stdout=subprocess.PIPE)
+    (resultat, ignorer) = commande.communicate()
+    print(resultat.decode())
