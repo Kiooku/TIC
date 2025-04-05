@@ -16,26 +16,26 @@ class ServeurApplicatif:
         (resultat, ignorer) = commande.communicate()
         commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/certificat.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/certificat.tsr", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        # commande=subprocess.Popen(f"openssl ts -verify -in file.tsr -queryfile cert/certFreeTSA/certificat.tsq -CAfile cert/certFreeTSA/cacert.pem -untrusted cert/certFreeTSA/tsa.crt", shell=True,stdout=subprocess.PIPE)
-        # (resultat, ignorer) = commande.communicate()
 
 
     def creation_certificat(self, etudiant: Etudiant,signature:str)-> Image:
-        commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 56 label:"{etudiant.certificat.intitule}\n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white img/texte.png', shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 66 label:"{etudiant.certificat.intitule} \n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white img/texte.png', shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         self.creer_qrcode(signature) 
         commande=subprocess.Popen("composite -gravity center ./src/img/texte.png ./src/img/fond_attestation.png ./src/img/combinaison.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        commande=subprocess.Popen("composite -geometry +1418+934 ./src/img/qrcode.png ./src/img/combinaison.png ./src/img/attestation.png", shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen("composite -geometry +1470+985 ./src/img/qrcode.png ./src/img/combinaison.png ./src/img/attestation.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        #TODO modifier taille qr code et steganographie
+        bloc=(etudiant.nom+etudiant.prenom+etudiant.certificat.intitule).zfill(64)
+        #TODO steganographie et signature
 
 
     def creer_qrcode(self,signature:str):
         nom_fichier = "./src/img/qrcode.png"
-        qr = qrcode.make(signature)
-        qr.save(nom_fichier, scale=2, border=0,)
-
+        qr=qrcode.QRCode(box_size=5,border=0)
+        qr.make(signature)
+        qr=qr.make_image()
+        qr.save(nom_fichier, scale=2, quiet_zone=0,)
 
 
     def verifier_attestation(self,certificat: Certificat, cle_publique:str)->bool:
