@@ -15,20 +15,23 @@ class ServeurApplicatif:
         pass
 
     def creation_certificat(self, etudiant: Etudiant,signature:str)-> Image:
-        commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 56 label:"{etudiant.certificat.intitule}\n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white img/texte.png', shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 66 label:"{etudiant.certificat.intitule} \n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white img/texte.png', shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         self.creer_qrcode(signature) 
         commande=subprocess.Popen("composite -gravity center img/texte.png img/fond_attestation.png img/combinaison.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        commande=subprocess.Popen("composite -geometry +1418+934 img/qrcode.png img/combinaison.png img/attestation.png", shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen("composite -geometry +1470+985 img/qrcode.png img/combinaison.png img/attestation.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        #TODO modifier taille qr code et steganographie
+        bloc=(etudiant.nom+etudiant.prenom+etudiant.certificat.intitule).zfill(64)
+        #TODO steganographie et signature
 
 
     def creer_qrcode(self,signature:str):
         nom_fichier = "img/qrcode.png"
-        qr = qrcode.make(signature)
-        qr.save(nom_fichier, scale=2, border=0,)
+        qr=qrcode.QRCode(box_size=5,border=0)
+        qr.make(signature)
+        qr=qr.make_image()
+        qr.save(nom_fichier, scale=2,quiet_zone=0)
 
 
 
