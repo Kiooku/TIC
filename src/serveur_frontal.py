@@ -7,6 +7,7 @@ import urllib.request
 import urllib.parse
 import re
 import sys
+import datetime
 
 class ServeurFrontal:
     def __init__(self, serveur_applicatif: ServeurApplicatif):
@@ -14,7 +15,8 @@ class ServeurFrontal:
 
     
     def obtenir_date(self) -> str:
-        pass
+        t = datetime.datetime.now()
+        return t.strftime('%d/%m/%Y')
 
 
     def demarrer(self):
@@ -76,5 +78,5 @@ if __name__ == "__main__":
     stegano: Steganographie = Steganographie()
     serveurApplicatif: ServeurApplicatif = ServeurApplicatif(stegano, "chatouillle")
     serveurFrontal: ServeurFrontal = ServeurFrontal(serveurApplicatif)
-
-    serveurFrontal.demarrer()
+    print(serveurFrontal.obtenir_date())
+    #serveurFrontal.demarrer()

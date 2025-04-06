@@ -37,7 +37,7 @@ ServeurApplicatif: ::: (Iscia)
 - [ ] creation_certificat(etudiant: Etudiant) -> Image ::: (Iscia - TP3 exo 2)
 - [X] creer_qrcode(etudiant: Etudiant) ::: (Iscia - Projet page 4)
 - [ ] verifier_attestation(certificat: Certificat, cle_publique: str) -> bool ::: (Iscia/Gaétan - TP3 exo 2)
-- [ ] dissimulation_par_steganographie(etudiant: Etudiant, chemin_image: str) ::: (Noah)
+- [X] dissimulation_par_steganographie(etudiant: Etudiant, chemin_image: str) ::: (Noah)
 - [ ] extraire_infos_steganographie(chemin_image: str) -> dict ::: (Gaétan)
 - [ ] extraire_qrcode_informations(chemin_image: str) -> int (signature dans le QRCode) ::: (Noah - Projet page 4)
 
