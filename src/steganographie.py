@@ -54,7 +54,7 @@ class Steganographie:
                     posx_pixel = 0
                     posy_pixel += 1
             message.append(int(rep_binaire, 2))
-        return bytes(message)
+        return bytes(message) 
     
 
 
