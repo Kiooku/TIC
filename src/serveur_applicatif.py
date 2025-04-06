@@ -13,14 +13,14 @@ class ServeurApplicatif:
         self.cle_privee= cle_privee
 
     def obtenir_timestamp(self, nom_certificat: str):
-        commande=subprocess.Popen(f'openssl ts -query -data {nom_certificat} -no_nonce -sha512 -cert -out ./src/cert/certFreeTSA/certificat.tsq', shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen(f'openssl ts -query -data {nom_certificat} -no_nonce -sha512 -cert -out ./src/cert/certFreeTSA/timestamp.tsq', shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        #commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/certificat.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/certificat.tsr", shell=True,stdout=subprocess.PIPE)
+        #commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/timestamp.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/timestamp.tsr", shell=True,stdout=subprocess.PIPE)
         #(resultat, ignorer) = commande.communicate()
 
 
     def creation_certificat(self, etudiant: Etudiant,signature:str)-> Image:
-        commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 66 label:"{etudiant.certificat.intitule} \n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white img/texte.png', shell=True,stdout=subprocess.PIPE)
+        commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 66 label:"{etudiant.certificat.intitule} \n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white ./src/img/texte.png', shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         self.creer_qrcode(signature) 
         commande=subprocess.Popen("composite -gravity center ./src/img/texte.png ./src/img/fond_attestation.png ./src/img/combinaison.png", shell=True,stdout=subprocess.PIPE)
@@ -28,7 +28,16 @@ class ServeurApplicatif:
         commande=subprocess.Popen("composite -geometry +1470+985 ./src/img/qrcode.png ./src/img/combinaison.png ./src/img/attestation.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         bloc=(etudiant.nom+etudiant.prenom+etudiant.certificat.intitule).zfill(64)
-        #TODO steganographie et signature
+        serveur_app.obtenir_timestamp("./src/img/attestation.png")
+        timestamp = []
+        with open("./src/cert/certFreeTSA/timestamp.tsq", "rb") as f:
+            content = f.readlines()[0]
+            for c in content:
+                timestamp.append(c)
+        img = stegano.cacher("./src/img/attestation.png", bytes(bloc.encode())+bytes(timestamp))
+        img.save("./src/img/attestation_stegano.png")
+
+        #TODO fonction signature
 
 
     def creer_qrcode(self,signature:str):
@@ -60,21 +69,23 @@ if __name__ == "__main__":
     print(serveur_app.creer_qrcode(signature))
     print(serveur_app.creation_certificat(etu,signature))
     print(os.getcwd())
+
+    """
     serveur_app.obtenir_timestamp("./src/img/attestation.png")
-    #### DÉBUT: Pour la vérification du certificat
-    commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/certificat.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/certificat.tsr", shell=True,stdout=subprocess.PIPE)
+    #### DÉBUT: Pour la vérification du certificat (timestamp)
+    commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/timestamp.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/certificat.tsr", shell=True,stdout=subprocess.PIPE)
     (resultat, ignorer) = commande.communicate()
-    commande=subprocess.Popen(f"openssl ts -verify -in ./src/cert/certFreeTSA/certificat.tsr -queryfile ./src/cert/certFreeTSA/certificat.tsq -CAfile ./src/cert/certFreeTSA/cacert.pem -untrusted ./src/cert/certFreeTSA/tsa.crt", shell=True,stdout=subprocess.PIPE)
+    commande=subprocess.Popen(f"openssl ts -verify -in ./src/cert/certFreeTSA/timestamp.tsr -queryfile ./src/cert/certFreeTSA/timestamp.tsq -CAfile ./src/cert/certFreeTSA/cacert.pem -untrusted ./src/cert/certFreeTSA/tsa.crt", shell=True,stdout=subprocess.PIPE)
     (resultat, ignorer) = commande.communicate()
     print(resultat.decode())
-    #### FIN: De la vérification du certificat
+    #### FIN: De la vérification du certificat (timestamp)
 
 
     ### Test stenographie avec le .tsq
     print("#"*45)
     print("### TEST STEGANOGRAPHIE AVEC LE TIMESTAMP ###")
     print("#"*45)
-    with open("./src/cert/certFreeTSA/certificat.tsq", "rb") as f:
+    with open("./src/cert/certFreeTSA/timestamp.tsq", "rb") as f:
         content = f.readlines()[0]
         i = 0
         res = []
@@ -99,3 +110,4 @@ if __name__ == "__main__":
         print(resultat.decode())
         
     #stegano.cacher("./src/img/attestation.png", "")
+    """
