@@ -29,14 +29,7 @@ class ServeurApplicatif:
         (resultat, ignorer) = commande.communicate()
         bloc=(etudiant.nom+etudiant.prenom+etudiant.certificat.intitule).zfill(64)
         serveur_app.obtenir_timestamp("./src/img/attestation.png")
-        timestamp = []
-        with open("./src/cert/certFreeTSA/timestamp.tsq", "rb") as f:
-            content = f.readlines()[0]
-            for c in content:
-                timestamp.append(c)
-        img = stegano.cacher("./src/img/attestation.png", bytes(bloc.encode())+bytes(timestamp))
-        img.save("./src/img/attestation_stegano.png")
-
+        self.dissimulation_par_steganographie(bloc)
         #TODO fonction signature
 
 
@@ -51,8 +44,16 @@ class ServeurApplicatif:
     def verifier_attestation(self,certificat: Certificat, cle_publique:str)->bool:
         pass
 
-    def dissimulation_par_steganographie(self,etudiant:Etudiant, chemin_image:str):
-        pass
+    def dissimulation_par_steganographie(self, bloc_information: str) -> bytes:
+        timestamp = []
+        with open("./src/cert/certFreeTSA/timestamp.tsq", "rb") as f:
+            content = f.readlines()[0]
+            for c in content:
+                timestamp.append(c)
+
+        img = stegano.cacher("./src/img/attestation.png", bytes(bloc_information.encode())+bytes(timestamp))
+        img.save("./src/img/attestation_stegano.png")
+
 
     def extraire_infos_steganographie(self,chemin_image:str)->dict:
         pass
