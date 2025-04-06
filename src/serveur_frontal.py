@@ -2,7 +2,7 @@ from serveur_applicatif import ServeurApplicatif
 from steganographie import Steganographie
 from etudiant import Etudiant
 from certificat import Certificat
-from bottle import route, run, template, request, response
+from bottle import Bottle, route, run, template, request, response
 import urllib.request
 import urllib.parse
 import re
@@ -11,7 +11,14 @@ import datetime
 
 class ServeurFrontal:
     def __init__(self, serveur_applicatif: ServeurApplicatif):
+        self.app = Bottle()
         self.serveur_applicatif: ServeurApplicatif = serveur_applicatif
+        self.setup_routes()
+
+    def setup_routes(self):
+        self.app.route('/fond', callback=self.recuperer_fond)
+        self.app.route('/verification', method='POST', callback=self.verification)
+        self.app.route('/creation', method='POST', callback=self.creation)
 
     
     def obtenir_date(self) -> str:
@@ -20,11 +27,10 @@ class ServeurFrontal:
 
 
     def demarrer(self):
-        run(host='0.0.0.0',port=8080,debug=True)
-        pass
+        self.app.run(host='0.0.0.0',port=8080,debug=True)
 
 
-    def contacter_sso_universite(self):
+    def contacter_sso_universite(self, email: str, mdp: str) -> list:
         re_token = re.compile(rb'name="token" value="([^"]+)"')
         request = urllib.request.Request('https://cas.unilim.fr')
         rep = urllib.request.urlopen(request)
@@ -37,16 +43,16 @@ class ServeurFrontal:
             sys.exit(1)
         cookieProcessor = urllib.request.HTTPCookieProcessor()
         opener = urllib.request.build_opener(cookieProcessor)
-        data = urllib.parse.urlencode({'user':'toto','password':'secret','token':token})
+        data = urllib.parse.urlencode({'user':email,'password':mdp,'token':token})
 
         request = urllib.request.Request('https://cas.unilim.fr',bytes(data,encoding='ascii'))
         reponse = opener.open(request)
         cookies = [c for c in cookieProcessor.cookiejar if c.name=='lemonldap']
-        print(cookies)
+        return cookies
 
 
-    @route('/fond')
-    def récupérer_fond():
+    #@route('/fond')
+    def recuperer_fond(self):
         response.set_header('Content-type', 'image/png')
         descripteur_fichier = open('./src/img/attestation.png','rb')
         contenu_fichier = descripteur_fichier.read()
@@ -54,24 +60,36 @@ class ServeurFrontal:
         return contenu_fichier
 
     
-    @route('/verification', method='POST')
-    def verification():
+    #@route('/verification', method='POST')
+    def verification(self):
         contenu_image = request.files.get('image')
         contenu_image.save('attestation_a_verifier.png',overwrite=True)
         response.set_header('Content-type', 'text/plain')
         return "ok!"
 
     
-    @route('/creation', method='POST')
-    # def creation(self, etudiant: Etudiant, mdp: str):
-    def creation():
-        contenu_nom = request.forms.get('nom')
-        contenu_prenom = request.forms.get('prenom')
+    #@route('/creation', method='POST')
+    def creation(self):
+        # Récupération des informations
+        contenu_email = request.forms.get('email')
+        nom_etudiant: str = contenu_email.split(".")[0]
+        prenom_etudiant: str = contenu_email.split(".")[1]
         contenu_intitulé_certification = request.forms.get('intitule_certif')
-        etudiant_actuel: Etudiant = Etudiant(contenu_nom, contenu_prenom, Certificat(contenu_intitulé_certification))
-        print('nom prénom :', contenu_nom, ",", contenu_prenom, ' intitulé de la certification :', contenu_intitulé_certification)
-        response.set_header('Content-type', 'text/plain')
-        return "ok!"
+        contenu_mot_de_passe = request.forms.get('mdp')
+        etudiant_actuel: Etudiant = Etudiant(nom_etudiant, prenom_etudiant, Certificat(contenu_intitulé_certification))
+        
+        # Vérification de l'étudiant avec le SSO de l'université
+        cookies: list = self.contacter_sso_universite(contenu_email, contenu_mot_de_passe)
+        if cookies:
+            # Intéraction avec le serveur d'application
+            # TODO signature on fait quoi??? Ce n'est pas le serveur d'application qui fait ça ?
+            self.serveur_applicatif.creation_certificat(etudiant_actuel, "TODO voir quoi mettre ici")
+
+            # Réponse
+            response.set_header('Content-type', 'text/plain')
+            return "ok!"
+        
+        return "Mot de passe ou nom de l'utilisateur incorrecte"
 
 
 if __name__ == "__main__":
@@ -79,4 +97,4 @@ if __name__ == "__main__":
     serveurApplicatif: ServeurApplicatif = ServeurApplicatif(stegano, "chatouillle")
     serveurFrontal: ServeurFrontal = ServeurFrontal(serveurApplicatif)
     print(serveurFrontal.obtenir_date())
-    #serveurFrontal.demarrer()
+    serveurFrontal.demarrer()

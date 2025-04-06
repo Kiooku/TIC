@@ -22,10 +22,10 @@ Employeur: ::: (Noah)
 
 ServeurFrontal: ::: (Gaétan)
 - serveurApp: ServeurApplicatif
-- [ ] obtenir_date() -> Date
-- [ ] demarrer() [Lancer le serveur avec openssl (TP4 - Ex8) utilisant un certificat ajouté dans le navigateur préalablement] ::: (Gaétan)
+- [X] obtenir_date() -> Date
+- [X] demarrer() [Lancer le serveur avec openssl (TP4 - Ex8) utilisant un certificat ajouté dans le navigateur préalablement] ::: (Gaétan)
 - [ ] verification() [Fait appel à la fonction verifier_attestation du ServeurApplicatif] ::: (Noah)
-- [ ] creation(etudiant: Etudiant, mdp: str) [Fait appel à la fonction creation_certificat du ServeurApplicatif. Cependant, il faut préalablement vérifier le mdp de l'étudiant avec le SSO Unilim] ::: (Gaétan/Noah - Projet page 7)
+- [X] creation(etudiant: Etudiant, mdp: str) [Fait appel à la fonction creation_certificat du ServeurApplicatif. Cependant, il faut préalablement vérifier le mdp de l'étudiant avec le SSO Unilim] ::: (Gaétan/Noah - Projet page 7)
 # TODO penser au bonus avec la sécurisation du serveur frontal (reverse_proxy, load_balancer, protection DoS, protection brute force)
 
 

@@ -28,7 +28,7 @@ class ServeurApplicatif:
         commande=subprocess.Popen("composite -geometry +1470+985 ./src/img/qrcode.png ./src/img/combinaison.png ./src/img/attestation.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         bloc=(etudiant.nom+etudiant.prenom+etudiant.certificat.intitule).zfill(64)
-        serveur_app.obtenir_timestamp("./src/img/attestation.png")
+        self.obtenir_timestamp("./src/img/attestation.png")
         self.dissimulation_par_steganographie(bloc)
         #TODO fonction signature
 
@@ -51,7 +51,7 @@ class ServeurApplicatif:
             for c in content:
                 timestamp.append(c)
 
-        img = stegano.cacher("./src/img/attestation.png", bytes(bloc_information.encode())+bytes(timestamp))
+        img = self.stegano.cacher("./src/img/attestation.png", bytes(bloc_information.encode())+bytes(timestamp))
         img.save("./src/img/attestation_stegano.png")
 
 
