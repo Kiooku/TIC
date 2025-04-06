@@ -3,7 +3,7 @@ import os
 
 class Steganographie:
     def vers_8bit(self, c):
-        chaine_binaire = bin(ord(c))[2:]
+        chaine_binaire = bin(c)[2:]#bin(ord(c))[2:]
         return "0"*(8-len(chaine_binaire))+chaine_binaire
     
 
@@ -21,7 +21,8 @@ class Steganographie:
         return bin(r_val)[-1]
     
 
-    def cacher(self, image ,message):
+    def cacher(self, image_path: str ,message: bytes) -> Image:
+        image = Image.open(image_path)
         dimX, dimY = image.size
         im = image.load()
         message_binaire = ''.join([self.vers_8bit(c) for c in message])
@@ -34,10 +35,12 @@ class Steganographie:
                 posx_pixel = 0
                 posy_pixel += 1
             assert(posy_pixel < dimY)
+        return image
 
 
-    def recuperer(self, image, taille):
-        message = ""
+    def recuperer(self, image_path: str, taille: int):
+        image = Image.open(image_path)
+        message: int = []
         dimX,dimY = image.size
         im = image.load()
         posx_pixel = 0
@@ -50,15 +53,15 @@ class Steganographie:
                 if (posx_pixel == dimX):
                     posx_pixel = 0
                     posy_pixel += 1
-            message += chr(int(rep_binaire, 2))
-        return message
+            message.append(int(rep_binaire, 2))
+        return bytes(message)
     
 
 
 if __name__ == "__main__":
     stegano: Steganographie = Steganographie()
     # Valeurs par defaut
-    nom_defaut = os.path.abspath("tests/surprise.png")
+    nom_defaut = "./tests/surprise.png"#os.path.abspath("tests/surprise.png")
     message_defaut = "Locks"
     choix_defaut = 1
     # programme de demonstration
@@ -71,8 +74,8 @@ if __name__ == "__main__":
         saisie = input("Entrez le message [%s]"%message_defaut)
         message_a_traiter = saisie or message_defaut
         print ("Longueur message : ",len(message_a_traiter))
-        mon_image = Image.open(nom_fichier)
-        stega.cacher(mon_image, message_a_traiter)
+        #mon_image = Image.open(nom_fichier)
+        mon_image = stegano.cacher(saisie, bytes(message_a_traiter.encode()))
         mon_image.save(os.path.abspath("tests/stegano_surprise.png"))
     else:
         nom_defaut = os.path.abspath("tests/stegano_surprise.png")
@@ -80,6 +83,5 @@ if __name__ == "__main__":
         nom_fichier = saisie or nom_defaut
         saisie = input("Entrez la taille du message ")
         message_a_traiter = int(saisie)
-        mon_image = Image.open(nom_fichier)
-        message_retrouve = stega.recuperer(mon_image, message_a_traiter)
+        message_retrouve = stegano.recuperer(saisie, message_a_traiter)
         print(message_retrouve)
