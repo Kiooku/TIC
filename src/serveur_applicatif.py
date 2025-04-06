@@ -6,6 +6,7 @@ import sys, os
 import subprocess
 import qrcode
 from time import time # TODO remove when all the tests pass, it's to test the certificate
+from const import LONGUEUR_BLOC_INFORMATION, LONGUEUR_TIMESTAMP
 
 class ServeurApplicatif:
     def __init__(self, steganographie:Steganographie, cle_privee:str):
@@ -55,8 +56,18 @@ class ServeurApplicatif:
         img.save("./src/img/attestation_stegano.png")
 
 
-    def extraire_infos_steganographie(self,chemin_image:str)->dict:
-        pass
+    def extraire_infos_steganographie(self,chemin_image:str) -> dict:
+        res: dict = {}
+        steganoRes = stegano.recuperer(chemin_image, LONGUEUR_BLOC_INFORMATION+LONGUEUR_TIMESTAMP)
+        # TODO pourquoi c'est 65 et pas 64 ???? [zfill(64)]
+        res["bloc_information"] = steganoRes[:65].decode()
+        res["timestamp"] = steganoRes[65:]
+        with open("./src/cert/certFreeTSA/timestampFromStegano.tsq", "wb") as f:
+            f.write(res["timestamp"])
+        
+        print(res)
+        return res
+    
 
     def extraire_qrcode_informations(self,chemin_image:str)->int:
         pass
@@ -70,7 +81,7 @@ if __name__ == "__main__":
     print(serveur_app.creer_qrcode(signature))
     print(serveur_app.creation_certificat(etu,signature))
     print(os.getcwd())
-
+    serveur_app.extraire_infos_steganographie("./src/img/attestation_stegano.png")
     """
     serveur_app.obtenir_timestamp("./src/img/attestation.png")
     #### DÉBUT: Pour la vérification du certificat (timestamp)
@@ -112,3 +123,8 @@ if __name__ == "__main__":
         
     #stegano.cacher("./src/img/attestation.png", "")
     """
+    commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/timestampFromStegano.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/timestampFromStegano.tsr", shell=True,stdout=subprocess.PIPE)
+    (resultat, ignorer) = commande.communicate()
+    commande=subprocess.Popen(f"openssl ts -verify -in ./src/cert/certFreeTSA/timestampFromStegano.tsr -queryfile ./src/cert/certFreeTSA/timestampFromStegano.tsq -CAfile ./src/cert/certFreeTSA/cacert.pem -untrusted ./src/cert/certFreeTSA/tsa.crt", shell=True,stdout=subprocess.PIPE)
+    (resultat, ignorer) = commande.communicate()
+    print(resultat.decode())
