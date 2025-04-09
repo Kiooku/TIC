@@ -60,14 +60,38 @@ class ServeurFrontal:
         return contenu_fichier
 
     
-    #@route('/verification', method='POST')
+    @route('/verification', method='POST')
     def verification(self):
         contenu_image = request.files.get('image')
-        contenu_image.save('attestation_a_verifier.png',overwrite=True)
-        response.set_header('Content-type', 'text/plain')
-        return "ok!"
+        chemin_image = './attestation_a_verifier.png'
+        contenu_image.save(chemin_image, overwrite=True)
+        try:
+            infos_stegano = self.serveur_applicatif.extraire_infos_steganographie(chemin_image)
+            bloc_info = infos_stegano["bloc_information"]
+            # pour enlever le padding
+            bloc_info = bloc_info.lstrip('0')
 
-    
+            intitule = self.extraire_intitule_du_bloc(bloc_info)
+
+            certificat = Certificat(intitule)
+
+            signature = self.serveur_applicatif.extraire_qrcode_informations(chemin_image)
+            # TODO ajouter les cle publique pour la signature (relire le sujet)
+            cle_publique = ""
+            resultat_verification = self.serveur_applicatif.verifier_attestation(certificat, cle_publique)
+
+            response.set_header('Content-type', 'text/plain')
+            if resultat_verification:
+                response.status = 200
+                return "Certificat valide"
+            else:
+                response.status = 403
+                return "Certificat invalide"
+
+        except Exception as e:
+            response.status = 500
+            return f"Erreur lors de la vérification: {str(e)}"
+
     #@route('/creation', method='POST')
     def creation(self):
         # Récupération des informations
@@ -90,6 +114,9 @@ class ServeurFrontal:
             return "ok!"
         
         return "Mot de passe ou nom de l'utilisateur incorrecte"
+
+    def extraire_intitule_du_bloc(self, bloc_info):
+        return "" #TODO voir si on dois extraire les infos et is oui i faut un separateur
 
 
 if __name__ == "__main__":
