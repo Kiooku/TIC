@@ -19,7 +19,6 @@ class Etudiant:
         }
 
         try:
-            # First call the creation endpoint
             response = requests.post('http://localhost:8080/creation', data=data)
 
             if response.status_code == 200:
