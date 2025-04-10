@@ -39,7 +39,7 @@ ServeurApplicatif: ::: (Iscia)
 - [ ] verifier_attestation(certificat: Certificat, cle_publique: str) -> bool ::: (Iscia/Gaétan - TP3 exo 2)
 - [X] dissimulation_par_steganographie(etudiant: Etudiant, chemin_image: str) ::: (Noah)
 - [X] extraire_infos_steganographie(chemin_image: str) -> dict ::: (Gaétan)
-- [ ] extraire_qrcode_informations(chemin_image: str) -> int (signature dans le QRCode) ::: (Noah - Projet page 4)
+- [ ] extraire_qrcode_informations(chemin_image: str) -> int (signature dans le QRCode) ::: (Iscia - Projet page 4)
 
 
 Steganographie: ::: (Gaétan - Projet page 5)
