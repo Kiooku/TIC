@@ -14,27 +14,43 @@ class ServeurApplicatif:
         self.cle_privee= cle_privee
 
     def obtenir_timestamp(self, nom_certificat: str):
+        """
+        Cette fonction crée ./src/cert/certFreeTSA/timestamp.tsq
+        """
         commande=subprocess.Popen(f'openssl ts -query -data {nom_certificat} -no_nonce -sha512 -cert -out ./src/cert/certFreeTSA/timestamp.tsq', shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         #commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/timestamp.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/timestamp.tsr", shell=True,stdout=subprocess.PIPE)
         #(resultat, ignorer) = commande.communicate()
 
 
-    def creation_certificat(self, etudiant: Etudiant,signature:str)-> Image:
+    def creation_certificat(self, etudiant: Etudiant)-> Image:
+        """
+        Cette fonction crée ./src/img/attestation_stegano.png
+        """
         commande=subprocess.Popen(f'convert -size 1000x600 -gravity center -pointsize 66 label:"{etudiant.certificat.intitule} \n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white ./src/img/texte.png', shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        self.creer_qrcode(signature) 
+
+        bloc=(etudiant.nom+etudiant.prenom+etudiant.certificat.intitule).zfill(64)
+        self.signature(bloc)
+        self.creer_qrcode("./src/cles/bloc_hash.sig") 
+
         commande=subprocess.Popen("composite -gravity center ./src/img/texte.png ./src/img/fond_attestation.png ./src/img/combinaison.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         commande=subprocess.Popen("composite -geometry +1470+985 ./src/img/qrcode.png ./src/img/combinaison.png ./src/img/attestation.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-        bloc=(etudiant.nom+etudiant.prenom+etudiant.certificat.intitule).zfill(64)
-        self.obtenir_timestamp("./src/img/attestation.png")
+
         self.dissimulation_par_steganographie(bloc)
-        #TODO fonction signature
 
 
-    def creer_qrcode(self,signature:str):
+
+    def creer_qrcode(self,chemin_signature:str):
+        """
+        Cette fonction crée ./src/img/qrcode.png
+        """
+        signature=""
+        with open(chemin_signature,"r") as fichier:
+            signature=fichier.readlines()
+            
         nom_fichier = "./src/img/qrcode.png"
         qr=qrcode.QRCode(box_size=5,border=0)
         qr.make(signature)
@@ -46,6 +62,9 @@ class ServeurApplicatif:
         pass
 
     def dissimulation_par_steganographie(self, bloc_information: str) -> bytes:
+        """
+        Cette fonction crée ./src/img/attestation_stegano.png
+        """
         timestamp = []
         with open("./src/cert/certFreeTSA/timestamp.tsq", "rb") as f:
             content = f.readlines()[0]
@@ -68,6 +87,18 @@ class ServeurApplicatif:
         print(res)
         return res
     
+    def signature(self,bloc:str): #Curve25519
+        """
+        Cette fonction crée ./src/cles/bloc_hash.sig 
+        """
+        commande=subprocess.Popen(f"openssl ecparam -out ./src/cles/ecc25519_cle_privee_signature.pem -name prime256v1 -genkey", shell=True,stdout=subprocess.PIPE)
+        (resultat, ignorer) = commande.communicate()
+        commande=subprocess.Popen(f"openssl ec -in ./src/cles/ecc25519_cle_privee_signature.pem -pubout -out ./src/cles/ecc25519_cle_publique_signature.pem", shell=True,stdout=subprocess.PIPE)
+        (resultat, ignorer) = commande.communicate()
+
+        commande=subprocess.Popen(f"echo -n {bloc} | openssl dgst -hex -sha256 -sign ./src/cles/ecc25519_cle_privee_signature.pem -out ./src/cles/bloc_hash.sig", shell=True,stdout=subprocess.PIPE)
+        (resultat, ignorer) = commande.communicate()
+
 
     def extraire_qrcode_informations(self,chemin_image:str)->int:
         pass
@@ -75,13 +106,18 @@ class ServeurApplicatif:
 if __name__ == "__main__":
     etu=Etudiant("Chat","LATTE", Certificat("Attestation de beauté ultime"))
     # Taille fichier .tsq: 91 octets
-    signature="chatouille"
+    #signature="chatouille"
     stegano: Steganographie = Steganographie()
     serveur_app=ServeurApplicatif(stegano, "Iscia")
-    print(serveur_app.creer_qrcode(signature))
-    print(serveur_app.creation_certificat(etu,signature))
+    
+    #print(serveur_app.creer_qrcode(signature))
+
+    print(serveur_app.creation_certificat(etu))
+    """
     print(os.getcwd())
     serveur_app.extraire_infos_steganographie("./src/img/attestation_stegano.png")
+    """
+    print(serveur_app.signature("bonjour"))
     """
     serveur_app.obtenir_timestamp("./src/img/attestation.png")
     #### DÉBUT: Pour la vérification du certificat (timestamp)
@@ -123,8 +159,10 @@ if __name__ == "__main__":
         
     #stegano.cacher("./src/img/attestation.png", "")
     """
+    """
     commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/timestampFromStegano.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/timestampFromStegano.tsr", shell=True,stdout=subprocess.PIPE)
     (resultat, ignorer) = commande.communicate()
     commande=subprocess.Popen(f"openssl ts -verify -in ./src/cert/certFreeTSA/timestampFromStegano.tsr -queryfile ./src/cert/certFreeTSA/timestampFromStegano.tsq -CAfile ./src/cert/certFreeTSA/cacert.pem -untrusted ./src/cert/certFreeTSA/tsa.crt", shell=True,stdout=subprocess.PIPE)
     (resultat, ignorer) = commande.communicate()
     print(resultat.decode())
+    """

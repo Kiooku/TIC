@@ -33,8 +33,8 @@ ServeurApplicatif: ::: (Iscia)
 - stegano: Steganographie
 - cle_privee: str
 - [X] obtenir_timestamp() -> int ::: (Gaétan - Projet page 1)
-- [ ] signature_document() ::: (Iscia/Gaétan - TP 2)
-- [ ] creation_certificat(etudiant: Etudiant) -> Image ::: (Iscia - TP3 exo 2)
+- [X] signature() ::: (Iscia/Gaétan - TP 2)
+- [X] creation_certificat(etudiant: Etudiant) -> Image ::: (Iscia - TP3 exo 2)
 - [X] creer_qrcode(etudiant: Etudiant) ::: (Iscia - Projet page 4)
 - [ ] verifier_attestation(certificat: Certificat, cle_publique: str) -> bool ::: (Iscia/Gaétan - TP3 exo 2)
 - [X] dissimulation_par_steganographie(etudiant: Etudiant, chemin_image: str) ::: (Noah)
