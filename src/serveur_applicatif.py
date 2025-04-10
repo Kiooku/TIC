@@ -5,8 +5,10 @@ from certificat import Certificat
 import sys, os
 import subprocess
 import qrcode
+import zbarlight
 from time import time # TODO remove when all the tests pass, it's to test the certificate
 from const import LONGUEUR_BLOC_INFORMATION, LONGUEUR_TIMESTAMP
+
 
 class ServeurApplicatif:
     def __init__(self, steganographie:Steganographie, cle_privee:str):
@@ -34,6 +36,9 @@ class ServeurApplicatif:
         self.signature(bloc)
         self.creer_qrcode("./src/cles/bloc_hash.sig") 
 
+        commande=subprocess.Popen(f'convert ./src/img/qrcode.png -resize 100x100 ./src/img/qrcode.png', shell=True,stdout=subprocess.PIPE)
+        (resultat, ignorer) = commande.communicate()
+
         commande=subprocess.Popen("composite -gravity center ./src/img/texte.png ./src/img/fond_attestation.png ./src/img/combinaison.png", shell=True,stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
         commande=subprocess.Popen("composite -geometry +1470+985 ./src/img/qrcode.png ./src/img/combinaison.png ./src/img/attestation.png", shell=True,stdout=subprocess.PIPE)
@@ -50,12 +55,18 @@ class ServeurApplicatif:
         signature=""
         with open(chemin_signature,"r") as fichier:
             signature=fichier.readlines()
-            
+
+        data = signature
         nom_fichier = "./src/img/qrcode.png"
-        qr=qrcode.QRCode(box_size=5,border=0)
-        qr.make(signature)
-        qr=qr.make_image()
-        qr.save(nom_fichier, scale=2, quiet_zone=0,)
+        qr = qrcode.make(data)
+        qr.save("./src/img/qrcode.png", scale=1)
+
+        img2 = Image.open("./src/img/qrcode.png")
+        qrImage = img2.crop((40,40,570,570))
+        qrImage.save("./src/img/qrcode.png", scale=1)
+        print(qrImage.size)
+   
+        print(qr.size)
 
 
     def verifier_attestation(self,certificat: Certificat, cle_publique:str)->bool:
@@ -100,8 +111,16 @@ class ServeurApplicatif:
         (resultat, ignorer) = commande.communicate()
 
 
-    def extraire_qrcode_informations(self,chemin_image:str)->int:
-        pass
+    def extraire_qrcode_informations(self,chemin_image:str)->str:  
+        attestation = Image.open(chemin_image)
+        qrImage = attestation.crop((1470,985,1470+100,985+100))
+        qrImage.save("./src/img/qrcode_recupere.png", "PNG")
+        qrcoderecupere="./src/img/qrcode_recupere.png"
+
+        image = Image.open(qrcoderecupere)
+        data = zbarlight.scan_codes(['qrcode'], image)
+        return(data[0].decode()[2:-4])
+        
 
 if __name__ == "__main__":
     etu=Etudiant("Chat","LATTE", Certificat("Attestation de beauté ultime"))
@@ -113,6 +132,7 @@ if __name__ == "__main__":
     #print(serveur_app.creer_qrcode(signature))
 
     print(serveur_app.creation_certificat(etu))
+    print(serveur_app.extraire_qrcode_informations("./src/img/attestation_stegano.png"))
     """
     print(os.getcwd())
     serveur_app.extraire_infos_steganographie("./src/img/attestation_stegano.png")
