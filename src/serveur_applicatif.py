@@ -98,18 +98,15 @@ class ServeurApplicatif:
             print("Bloc info:", bloc_info)
             print("Timestamp data:", timestamp_data)
 
-            # On enleve le padding
-            bloc_info = bloc_info.lstrip('0')
             print("Bloc d'info:", bloc_info)
+
             signature_qrcode = self.extraire_qrcode_informations(chemin_image)
             signature_hex = signature_qrcode.split("SHA2-256(stdin)=")[1].strip()
 
-            #permet de fix l'erreur "Odd-len string"
             if len(signature_hex) % 2 == 1:
                 signature_hex = '0' + signature_hex
 
             signature_binary = binascii.unhexlify(signature_hex)
-            # Verification de la signature
             temp_bloc_file = "./src/cert/temp_bloc.txt"
             with open(temp_bloc_file, "w") as f:
                 f.write(bloc_info)
