@@ -82,31 +82,34 @@ class ServeurApplicatif:
             infos_stegano = self.extraire_infos_steganographie(chemin_image)
             bloc_info = infos_stegano["bloc_information"]
             timestamp_data = infos_stegano["timestamp"]
+            #print("Bloc info:", bloc_info)
+            #print("Timestamp data:", timestamp_data)
 
             #On enleve le padding
             bloc_info = bloc_info.lstrip('0')
-
+            #print("Bloc d'info:", bloc_info)
             signature_qrcode = self.extraire_qrcode_informations(chemin_image)
-
+            #print("Signature QRCode:", signature_qrcode)
+            
             # Verification de la signature
-
             temp_bloc_file = "./src/cert/temp_bloc.txt"
             with open(temp_bloc_file, "w") as f:
                 f.write(bloc_info)
-
+            
             temp_sig_file = "./src/cert/temp_sig.bin"
             with open(temp_sig_file, "wb") as f:
-                f.write(signature_qrcode)
-
+                f.write(signature_qrcode.encode())
+            
             # on verifie la signature avec openssl
             cmd = subprocess.Popen(
-                f"openssl dgst -sha256 -verify {cle_publique} -signature {temp_sig_file} {temp_bloc_file}",
+                f"openssl dgst -hex -sha256 -verify {cle_publique} -signature {temp_sig_file} {temp_bloc_file}",
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
             (resultat, erreur) = cmd.communicate()
-
+            print("Erreur:", erreur)
+            
             if os.path.exists(temp_bloc_file):
                 os.remove(temp_bloc_file)
             if os.path.exists(temp_sig_file):
@@ -132,6 +135,9 @@ class ServeurApplicatif:
 
             signature_valide = "Verified OK" in resultat.decode()
             timestamp_valide = "Verification: OK" in timestamp_resultat.decode()
+
+            print("Signature Valide ?", signature_valide, ":", resultat.decode())
+            print("Timestamp Valide ?", timestamp_valide, ":", timestamp_resultat.decode())
 
             return signature_valide and timestamp_valide
 
@@ -184,8 +190,10 @@ class ServeurApplicatif:
             (resultat, ignorer) = commande.communicate()
 
         # Signature du bloc
+        print("Bloc:", bloc)
         commande = subprocess.Popen(f"echo -n {bloc} | openssl dgst -hex -sha256 -sign ./src/cles/ecc25519_cle_privee_signature.pem -out ./src/cles/bloc_hash.sig", shell=True, stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
+
         return resultat
 
 
@@ -210,12 +218,14 @@ if __name__ == "__main__":
     #print(serveur_app.creer_qrcode(signature))
 
     print(serveur_app.creation_certificat(etu))
-    print(serveur_app.extraire_qrcode_informations("./src/img/attestation_stegano.png"))
+    print(serveur_app.verifier_attestation("./src/img/attestation_stegano.png"))
+    #print(serveur_app.extraire_qrcode_informations("./src/img/attestation_stegano.png"))
     """
     print(os.getcwd())
-    serveur_app.extraire_infos_steganographie("./src/img/attestation_stegano.png")
     """
-    print(serveur_app.signature("bonjour"))
+    #print(serveur_app.extraire_infos_steganographie("./src/img/attestation_stegano.png"))
+    
+    # print(serveur_app.signature("bonjour"))
     """
     serveur_app.obtenir_timestamp("./src/img/attestation.png")
     #### DÉBUT: Pour la vérification du certificat (timestamp)
