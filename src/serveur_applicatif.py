@@ -29,7 +29,7 @@ class ServeurApplicatif:
         # commande=subprocess.Popen(f"curl -H 'Content-Type: application/timestamp-query' --data-binary '@./src/cert/certFreeTSA/timestamp.tsq' https://freetsa.org/tsr > ./src/cert/certFreeTSA/timestamp.tsr", shell=True,stdout=subprocess.PIPE)
         # (resultat, ignorer) = commande.communicate()
 
-    def creation_certificat(self, etudiant: Etudiant) -> Image:
+    def creation_certificat(self, etudiant: Etudiant):
         """
         Cette fonction crée ./src/img/attestation_stegano.png
         """
@@ -57,6 +57,7 @@ class ServeurApplicatif:
 
         self.obtenir_timestamp("./src/img/attestation.png")
         self.dissimulation_par_steganographie(bloc)
+    
 
     def creer_qrcode(self, chemin_signature: str):
         """

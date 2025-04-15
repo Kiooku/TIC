@@ -25,7 +25,7 @@ class Employeur:
             'image': ('certificat.png', img_bytes, 'image/png')
         }
 
-        response = requests.post('http://localhost:8080/verification', files=files)
+        response = requests.post('https://localhost:8080/verification', files=files)
         try:
             if response.status_code == 200:
                 print("Certifié !")

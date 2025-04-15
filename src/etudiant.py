@@ -1,8 +1,9 @@
 from certificat import Certificat
 from PIL import Image
 import requests
+import subprocess
 from io import BytesIO
-
+from time import sleep
 
 class Etudiant:
     def __init__(self,nom:str,prenom:str, certificat:Certificat):
@@ -12,24 +13,30 @@ class Etudiant:
         
     
     def demander_certificat(self, mdp: str) -> Image:
+        print(self.certificat.intitule)
         data = {
             'email': f"{self.prenom}.{self.nom}@etu.unilim.fr",
             'intitule_certif': self.certificat.intitule,
-            'mdp': mdp  # verification du mdp cote serveur ?
+            'mdp': mdp 
         }
 
-        try:
-            response = requests.post('http://localhost:8080/creation', data=data)
-
-            if response.status_code == 200:
-                print("Mot de passe valide on recupere l'image")
-                return None  # car pour le moment, la requete ne retourne par l'image
-            elif response.status_code == 403:
-                print("Accès refusé par le serveur applicatif")
-            else:
-                print("Erreur lors de la création du certificat !")
-        except requests.RequestException as e:
-            raise Exception(f"Erreur réseau: {str(e)}")
+        commande_curl = subprocess.Popen(
+            f"curl -v -X POST -d 'email={data['email']}' -d 'intitule_certif={data['intitule_certif']}' -d 'mdp={data['mdp']}' --cacert ./src/cert/certCertifPlus/ecc.ca.cert.pem http://localhost:8080/creation",
+            shell=True, stdout=subprocess.PIPE)
+        (resultat, _) = commande_curl.communicate()
+        print(data, resultat.decode())
+        if resultat.decode() == "Mot de passe ou nom de l'utilisateur incorrecte":
+            return None
+        
+        print("Resultat:", resultat)
+        sleep(2)
+        
+        commande_curl = subprocess.Popen(
+            f'curl -v -X GET --cacert ./src/cert/certCertifPlus/ecc.ca.cert.pem https://localhost:9000/fond',
+            shell=True, stdout=subprocess.PIPE)
+        (resultat, _) = commande_curl.communicate()
+        image = Image.open(BytesIO(resultat))
+        return image
 
 
 
