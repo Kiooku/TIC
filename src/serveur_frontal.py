@@ -52,7 +52,6 @@ class ServeurFrontal:
         return cookies
 
 
-    #@route('/fond')
     def recuperer_fond(self):
         response.set_header('Content-type', 'image/png')
         
@@ -66,10 +65,12 @@ class ServeurFrontal:
     def verification(self):
         try:
             contenu_image = request.files.get('image')
+            print("Contenu image:", contenu_image)
             chemin_image = './attestation_a_verifier.png'
             contenu_image.save(chemin_image, overwrite=True)
             
             resultat = self.serveur_applicatif.verifier_attestation(chemin_image)
+            print("Resultat:", resultat)
             response.set_header('Content-type', 'text/plain')
             if resultat:
                 response.status = 200

@@ -57,6 +57,7 @@ class ServeurApplicatif:
 
         self.obtenir_timestamp("./src/img/attestation.png")
         self.dissimulation_par_steganographie(bloc)
+        print(etudiant)
     
 
     def creer_qrcode(self, chemin_signature: str):
