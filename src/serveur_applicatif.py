@@ -58,7 +58,7 @@ class ServeurApplicatif:
         self.obtenir_timestamp("./src/img/attestation.png")
         self.dissimulation_par_steganographie(bloc)
         print(etudiant)
-    
+
 
     def creer_qrcode(self, chemin_signature: str):
         """
@@ -66,11 +66,11 @@ class ServeurApplicatif:
         """
         signature = ""
         with open(chemin_signature, "r") as fichier:
-            signature = fichier.readlines()
+            signature = fichier.read()
 
         data = signature
         print(f"Signature: {signature}")
-        
+
         nom_fichier = "./src/img/qrcode.png"
         qr = qrcode.make(data)
         qr.save("./src/img/qrcode.png", scale=1)
@@ -235,7 +235,7 @@ class ServeurApplicatif:
 
             data = zbarlight.scan_codes(['qrcode'], image)
             decoded_data = data[0].decode()
-            result = decoded_data[2:-4]
+            result = decoded_data
             print(f"Processed QR data: {result}")
             return result
 
