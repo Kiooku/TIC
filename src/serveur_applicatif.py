@@ -55,6 +55,8 @@ class ServeurApplicatif:
             signature=fichier.readlines()
 
         data = signature
+        print(f"Signature: {signature}")
+        
         nom_fichier = "./src/img/qrcode.png"
         qr = qrcode.make(data)
         qr.save("./src/img/qrcode.png", scale=1)
