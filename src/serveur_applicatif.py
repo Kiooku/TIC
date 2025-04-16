@@ -78,9 +78,9 @@ class ServeurApplicatif:
         img2 = Image.open("./src/img/qrcode.png")
         qrImage = img2.crop((40, 40, 570, 570))
         qrImage.save("./src/img/qrcode.png", scale=1)
-        print(qrImage.size)
+        #print(qrImage.size)
 
-        print(qr.size)
+        #print(qr.size)
 
     def verifier_attestation(self, chemin_image: str,
                              cle_publique: str = "./src/cles/ecc25519_cle_publique_signature.pem") -> bool:
@@ -102,15 +102,22 @@ class ServeurApplicatif:
             print("Bloc info:", bloc_info)
             print("Timestamp data:", timestamp_data)
 
-            print("Bloc d'info:", bloc_info)
+            #print("Bloc d'info:", bloc_info)
 
             signature_qrcode = self.extraire_qrcode_informations(chemin_image)
             signature_hex = signature_qrcode.split("SHA2-256(stdin)=")[1].strip()
+
+            print("signature qr",signature_qrcode)
+            print("signa", signature_hex)
+            print("bloc info", bloc_info)
 
             if len(signature_hex) % 2 == 1:
                 signature_hex = '0' + signature_hex
 
             signature_binary = binascii.unhexlify(signature_hex)
+
+            print("sign bin", signature_binary)
+
             temp_bloc_file = "./src/cert/temp_bloc.txt"
             with open(temp_bloc_file, "w") as f:
                 f.write(bloc_info)
@@ -129,10 +136,10 @@ class ServeurApplicatif:
             (resultat, erreur) = cmd.communicate()
             print("Erreur:", erreur)
 
-            if os.path.exists(temp_bloc_file):
-                os.remove(temp_bloc_file)
-            if os.path.exists(temp_sig_file):
-                os.remove(temp_sig_file)
+            #if os.path.exists(temp_bloc_file):
+             #   os.remove(temp_bloc_file)
+            #if os.path.exists(temp_sig_file):
+             #   os.remove(temp_sig_file)
 
             # Verification du timestamp
             with open("./src/cert/certFreeTSA/timestampFromStegano.tsq", "wb") as f:
@@ -247,7 +254,11 @@ class ServeurApplicatif:
 
 
 if __name__ == "__main__":
-    etu = Etudiant("Chat", "LATTE", Certificat("Attestation de beauté ultime"))
+    #etu = Etudiant("Chaton", "LATTE", Certificat("Attestation de beauté ultime"))
+    #etu = Etudiant("Chat-ouille", "Latte", Certificat("certificat de beauté ultime"))
+    print(len("certificat de beauté ultime"))
+    
+    etu : Etudiant= Etudiant("Chat-ouille", "Latte", Certificat("Certificat de beaute ultime"))
     # Taille fichier .tsq: 91 octets
     # signature="chatouille"
     stegano: Steganographie = Steganographie()
@@ -256,6 +267,7 @@ if __name__ == "__main__":
     # print(serveur_app.creer_qrcode(signature))
 
     print(serveur_app.creation_certificat(etu))
+
     print(serveur_app.verifier_attestation("./src/img/attestation_stegano.png"))
     # print(serveur_app.extraire_qrcode_informations("./src/img/attestation_stegano.png"))
     """
