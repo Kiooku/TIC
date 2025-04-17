@@ -1,4 +1,3 @@
-from steganographie import Steganographie
 from bottle import Bottle, route, run, template, request, response
 import urllib.request
 import urllib.parse
@@ -81,7 +80,6 @@ class ServeurFrontal:
 
 
 if __name__ == "__main__":
-    stegano: Steganographie = Steganographie()
     serveurFrontal: ServeurFrontal = ServeurFrontal()
     print(serveurFrontal.obtenir_date())
     serveurFrontal.demarrer()
