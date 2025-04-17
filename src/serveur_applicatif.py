@@ -40,7 +40,8 @@ class ServeurApplicatif:
 
         bloc = (etudiant.nom + etudiant.prenom + etudiant.certificat.intitule).zfill(64)
         self.signature(bloc)
-        self.creer_qrcode("./src/cles/bloc_hash.sig")
+        #self.creer_qrcode("./src/cles/bloc_hash.sig")
+        self.creer_qrcode("./src/cles/bloc_hash.hex")
 
         commande = subprocess.Popen(f'convert ./src/img/qrcode.png -resize 100x100 ./src/img/qrcode.png', shell=True,
                                     stdout=subprocess.PIPE)
@@ -55,7 +56,7 @@ class ServeurApplicatif:
             shell=True, stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
 
-        self.obtenir_timestamp("./src/img/attestation.png")
+        #self.obtenir_timestamp("./src/img/attestation.png")
         self.dissimulation_par_steganographie(bloc)
         print(etudiant)
 
@@ -68,15 +69,15 @@ class ServeurApplicatif:
         with open(chemin_signature, "r") as fichier:
             signature = fichier.read()
 
-        data = signature
-        print(f"Signature: {signature}")
+        data = signature.replace("\n", "")
+        print(f"Signature: {signature} ({chemin_signature}) ::: {data}")
 
         nom_fichier = "./src/img/qrcode.png"
         qr = qrcode.make(data)
         qr.save("./src/img/qrcode.png", scale=1)
 
         img2 = Image.open("./src/img/qrcode.png")
-        qrImage = img2.crop((40, 40, 570, 570))
+        qrImage = img2.crop((40, 40, 530, 530))
         qrImage.save("./src/img/qrcode.png", scale=1)
         #print(qrImage.size)
 
@@ -105,42 +106,38 @@ class ServeurApplicatif:
             #print("Bloc d'info:", bloc_info)
 
             signature_qrcode = self.extraire_qrcode_informations(chemin_image)
-            signature_hex = signature_qrcode.split("SHA2-256(stdin)=")[1].strip()
+            #signature_hex = signature_qrcode.split("SHA2-256(stdin)=")[1].strip()
 
             print("signature qr",signature_qrcode)
-            print("signa", signature_hex)
-            print("bloc info", bloc_info)
 
-            if len(signature_hex) % 2 == 1:
-                signature_hex = '0' + signature_hex
-
-            signature_binary = binascii.unhexlify(signature_hex)
-
-            print("sign bin", signature_binary)
-
-            temp_bloc_file = "./src/cert/temp_bloc.txt"
+            temp_bloc_file = "./src/cert/temp_bloc.hex"
             with open(temp_bloc_file, "w") as f:
-                f.write(bloc_info)
-
-            temp_sig_file = "./src/cert/temp_sig.bin"
-            with open(temp_sig_file, "wb") as f:
-                f.write(signature_binary)
+                f.write(signature_qrcode)
+            
+            cmd = subprocess.Popen(
+                f"xxd -r -p {temp_bloc_file} > ./src/cert/signature_bis.bin",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            (resultat, erreur) = cmd.communicate()
 
             # on verifie la signature avec openssl
             cmd = subprocess.Popen(
-                f"openssl dgst -hex -sha256 -verify {cle_publique} -signature {temp_sig_file} {temp_bloc_file}",
+                f"echo -n {bloc_info} | openssl dgst -sha256 -verify {cle_publique} -signature ./src/cert/signature_bis.bin",
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
             (resultat, erreur) = cmd.communicate()
             print("Erreur:", erreur)
+            
 
             #if os.path.exists(temp_bloc_file):
              #   os.remove(temp_bloc_file)
             #if os.path.exists(temp_sig_file):
              #   os.remove(temp_sig_file)
-
+            """
             # Verification du timestamp
             with open("./src/cert/certFreeTSA/timestampFromStegano.tsq", "wb") as f:
                 f.write(timestamp_data)
@@ -158,14 +155,14 @@ class ServeurApplicatif:
                 stdout=subprocess.PIPE
             )
             (timestamp_resultat, _) = cmd.communicate()
-
+            """
             signature_valide = "Verified OK" in resultat.decode()
-            timestamp_valide = "Verification: OK" in timestamp_resultat.decode()
+            #timestamp_valide = "Verification: OK" in timestamp_resultat.decode()
 
             print("Signature Valide ?", signature_valide, ":", resultat.decode())
-            print("Timestamp Valide ?", timestamp_valide, ":", timestamp_resultat.decode())
+            #print("Timestamp Valide ?", timestamp_valide, ":", timestamp_resultat.decode())
 
-            return signature_valide and timestamp_valide
+            return signature_valide #and timestamp_valide
 
         except Exception as e:
             print(f"Erreur lors de la vérification de l'attestation: {str(e)}")
@@ -222,7 +219,12 @@ class ServeurApplicatif:
         # Signature du bloc
         print("Bloc:", bloc)
         commande = subprocess.Popen(
-            f"echo -n {bloc} | openssl dgst -hex -sha256 -sign ./src/cles/ecc25519_cle_privee_signature.pem -out ./src/cles/bloc_hash.sig",
+            f"echo -n {bloc} | openssl dgst -sha256 -sign ./src/cles/ecc25519_cle_privee_signature.pem -out ./src/cles/bloc_hash.sig",
+            shell=True, stdout=subprocess.PIPE)
+        (resultat, ignorer) = commande.communicate()
+
+        commande = subprocess.Popen(
+            f"xxd -p ./src/cles/bloc_hash.sig > ./src/cles/bloc_hash.hex",
             shell=True, stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
 
@@ -258,7 +260,7 @@ if __name__ == "__main__":
     #etu = Etudiant("Chat-ouille", "Latte", Certificat("certificat de beauté ultime"))
     print(len("certificat de beauté ultime"))
     
-    etu : Etudiant= Etudiant("Chat-ouille", "Latte", Certificat("Certificat de beaute ultime"))
+    etu : Etudiant= Etudiant("Chatouille", "Latte", Certificat("Certificat de beaute ultime"))
     # Taille fichier .tsq: 91 octets
     # signature="chatouille"
     stegano: Steganographie = Steganographie()

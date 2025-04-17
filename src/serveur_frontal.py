@@ -95,7 +95,7 @@ class ServeurFrontal:
         etudiant_actuel: Etudiant = Etudiant(nom_etudiant, prenom_etudiant, Certificat(contenu_intitulé_certification))
 
         # Le SSO ne fonctionne plus depuis le 2FA (Top !!)
-        """
+        
         # Vérification de l'étudiant avec le SSO de l'université
         cookies: list = self.contacter_sso_universite(contenu_email, contenu_mot_de_passe)
         if cookies:
@@ -107,7 +107,7 @@ class ServeurFrontal:
             return "ok!"
         
         return "Mot de passe ou nom de l'utilisateur incorrecte"
-        """
+        
         self.serveur_applicatif.creation_certificat(etudiant_actuel)
 
     def extraire_intitule_du_bloc(self, bloc_info):
