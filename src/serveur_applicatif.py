@@ -1,16 +1,14 @@
 import traceback
-
 from steganographie import Steganographie
 from etudiant import Etudiant
 from PIL import Image
 from certificat import Certificat
-import sys, os
+import os
 import subprocess
 import qrcode
 import zbarlight
-from time import time  # TODO remove when all the tests pass, it's to test the certificate
 from const import LONGUEUR_BLOC_INFORMATION, LONGUEUR_TIMESTAMP
-import binascii
+from unidecode import unidecode
 
 
 class ServeurApplicatif:
@@ -37,10 +35,10 @@ class ServeurApplicatif:
             f'convert -size 1000x600 -gravity center -pointsize 66 label:"{etudiant.certificat.intitule} \n délivré(e) à {etudiant.nom} {etudiant.prenom}" -transparent white ./src/img/texte.png',
             shell=True, stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
-
-        bloc = (etudiant.nom + etudiant.prenom + etudiant.certificat.intitule).zfill(64)
+        
+        bloc = unidecode((etudiant.nom + etudiant.prenom + etudiant.certificat.intitule).zfill(64))
+        
         self.signature(bloc)
-        #self.creer_qrcode("./src/cles/bloc_hash.sig")
         self.creer_qrcode("./src/cles/bloc_hash.hex")
 
         commande = subprocess.Popen(f'convert ./src/img/qrcode.png -resize 100x100 ./src/img/qrcode.png', shell=True,
@@ -56,9 +54,8 @@ class ServeurApplicatif:
             shell=True, stdout=subprocess.PIPE)
         (resultat, ignorer) = commande.communicate()
 
-        #self.obtenir_timestamp("./src/img/attestation.png")
+        self.obtenir_timestamp("./src/img/attestation.png")
         self.dissimulation_par_steganographie(bloc)
-        print(etudiant)
 
 
     def creer_qrcode(self, chemin_signature: str):
@@ -79,9 +76,7 @@ class ServeurApplicatif:
         img2 = Image.open("./src/img/qrcode.png")
         qrImage = img2.crop((40, 40, 530, 530))
         qrImage.save("./src/img/qrcode.png", scale=1)
-        #print(qrImage.size)
-
-        #print(qr.size)
+        
 
     def verifier_attestation(self, chemin_image: str,
                              cle_publique: str = "./src/cles/ecc25519_cle_publique_signature.pem") -> bool:
@@ -103,10 +98,7 @@ class ServeurApplicatif:
             print("Bloc info:", bloc_info)
             print("Timestamp data:", timestamp_data)
 
-            #print("Bloc d'info:", bloc_info)
-
             signature_qrcode = self.extraire_qrcode_informations(chemin_image)
-            #signature_hex = signature_qrcode.split("SHA2-256(stdin)=")[1].strip()
 
             print("signature qr",signature_qrcode)
 
@@ -132,12 +124,6 @@ class ServeurApplicatif:
             (resultat, erreur) = cmd.communicate()
             print("Erreur:", erreur)
             
-
-            #if os.path.exists(temp_bloc_file):
-             #   os.remove(temp_bloc_file)
-            #if os.path.exists(temp_sig_file):
-             #   os.remove(temp_sig_file)
-            """
             # Verification du timestamp
             with open("./src/cert/certFreeTSA/timestampFromStegano.tsq", "wb") as f:
                 f.write(timestamp_data)
@@ -155,14 +141,14 @@ class ServeurApplicatif:
                 stdout=subprocess.PIPE
             )
             (timestamp_resultat, _) = cmd.communicate()
-            """
+            
             signature_valide = "Verified OK" in resultat.decode()
-            #timestamp_valide = "Verification: OK" in timestamp_resultat.decode()
+            timestamp_valide = "Verification: OK" in timestamp_resultat.decode()
 
             print("Signature Valide ?", signature_valide, ":", resultat.decode())
-            #print("Timestamp Valide ?", timestamp_valide, ":", timestamp_resultat.decode())
+            print("Timestamp Valide ?", timestamp_valide, ":", timestamp_resultat.decode())
 
-            return signature_valide #and timestamp_valide
+            return signature_valide and timestamp_valide
 
         except Exception as e:
             print(f"Erreur lors de la vérification de l'attestation: {str(e)}")
@@ -181,6 +167,7 @@ class ServeurApplicatif:
         img = self.stegano.cacher("./src/img/attestation.png", bytes(bloc_information.encode()) + bytes(timestamp))
         img.save("./src/img/attestation_stegano.png")
 
+
     def extraire_infos_steganographie(self, chemin_image: str) -> dict:
         """
         Extrait les informations cachées par stéganographie dans l'image
@@ -188,7 +175,6 @@ class ServeurApplicatif:
         """
         res: dict = {}
         steganoRes = self.stegano.recuperer(chemin_image, LONGUEUR_BLOC_INFORMATION + LONGUEUR_TIMESTAMP)
-        # TODO pourquoi c'est 65 et pas 64 ???? [zfill(64)]
         res["bloc_information"] = steganoRes[:LONGUEUR_BLOC_INFORMATION].decode()
         res["timestamp"] = steganoRes[LONGUEUR_BLOC_INFORMATION:]
         with open("./src/cert/certFreeTSA/timestampFromStegano.tsq", "wb") as f:
@@ -196,6 +182,7 @@ class ServeurApplicatif:
 
         print(res)
         return res
+
 
     def signature(self, bloc: str):
         """
@@ -217,7 +204,6 @@ class ServeurApplicatif:
             (resultat, ignorer) = commande.communicate()
 
         # Signature du bloc
-        print("Bloc:", bloc)
         commande = subprocess.Popen(
             f"echo -n {bloc} | openssl dgst -sha256 -sign ./src/cles/ecc25519_cle_privee_signature.pem -out ./src/cles/bloc_hash.sig",
             shell=True, stdout=subprocess.PIPE)
@@ -245,7 +231,7 @@ class ServeurApplicatif:
             data = zbarlight.scan_codes(['qrcode'], image)
             decoded_data = data[0].decode()
             result = decoded_data
-            print(f"Processed QR data: {result}")
+            #print(f"Processed QR data: {result}")
             return result
 
         except Exception as e:
@@ -260,7 +246,7 @@ if __name__ == "__main__":
     #etu = Etudiant("Chat-ouille", "Latte", Certificat("certificat de beauté ultime"))
     print(len("certificat de beauté ultime"))
     
-    etu : Etudiant= Etudiant("Chatouille", "Latte", Certificat("Certificat de beaute ultime"))
+    etu : Etudiant= Etudiant("Chatouille", "Latte", Certificat("Certificat de beauté ultime"))
     # Taille fichier .tsq: 91 octets
     # signature="chatouille"
     stegano: Steganographie = Steganographie()

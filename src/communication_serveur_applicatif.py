@@ -32,9 +32,7 @@ class CommunicationServeurApplicatif:
     def faire_verification(self):
         try:
             contenu_image = request.files.get('image')
-            print("*"*25)
-            print("--- Contenu image:", contenu_image)
-            print("*"*25)
+            
             chemin_image = './attestation_a_verifier.png'
             contenu_image.save(chemin_image, overwrite=True)
             
@@ -60,9 +58,9 @@ class CommunicationServeurApplicatif:
         prenom_etudiant: str = contenu_email.split(".")[1].split("@")[0]
         contenu_intitulé_certification = request.forms.get('intitule_certif')
         contenu_mot_de_passe = request.forms.get('mdp')
+        
         etudiant_actuel: Etudiant = Etudiant(nom_etudiant, prenom_etudiant, Certificat(contenu_intitulé_certification))
-        print(f"--- Nom: {etudiant_actuel.nom}; Prénom: {etudiant_actuel.prenom}; Certificat: {etudiant_actuel.certificat.intitule}")
-
+        
         # Le SSO ne fonctionne plus depuis le 2FA (Top !!) - Sauf avec eduroam
         """
         # Vérification de l'étudiant avec le SSO de l'université

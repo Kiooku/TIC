@@ -8,14 +8,13 @@ from employeur import Employeur
 from threading import Thread
 import subprocess
 from PIL import Image
-import io
 from time import sleep
 
 steganographie: Steganographie = Steganographie()
 serveur_applicatif: ServeurApplicatif = ServeurApplicatif(steganographie, "TODO supprimer ?")
 communication_serveur_applicatif: CommunicationServeurApplicatif = CommunicationServeurApplicatif(serveur_applicatif)
 serveur_frontal: ServeurFrontal = ServeurFrontal()
-etudiant: Etudiant = Etudiant("Chat-ouille", "Latte", Certificat("Certificat de beaute ultime"))
+etudiant: Etudiant = Etudiant("Chat-ouille", "Latte", Certificat("Certificat de beauté ultime"))
 
 t1 = Thread(target = serveur_frontal.demarrer)
 t2 = Thread(target = communication_serveur_applicatif.demarrer)
