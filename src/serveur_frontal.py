@@ -9,15 +9,16 @@ import re
 import sys
 import datetime
 from time import sleep
+import subprocess
 
 class ServeurFrontal:
-    def __init__(self, serveur_applicatif: ServeurApplicatif):
+    def __init__(self):
         self.app = Bottle()
-        self.serveur_applicatif: ServeurApplicatif = serveur_applicatif
+        #self.serveur_applicatif: ServeurApplicatif = serveur_applicatif
         self.setup_routes()
 
     def setup_routes(self):
-        self.app.route('/fond', callback=self.recuperer_fond)
+        #self.app.route('/fond', callback=self.recuperer_fond)
         self.app.route('/verification', method='POST', callback=self.verification)
         self.app.route('/creation', method='POST', callback=self.creation)
 
@@ -51,18 +52,19 @@ class ServeurFrontal:
         cookies = [c for c in cookieProcessor.cookiejar if c.name=='lemonldap']
         return cookies
 
-
-    def recuperer_fond(self):
-        response.set_header('Content-type', 'image/png')
-        
-        descripteur_fichier = open('./src/img/attestation_stegano.png','rb')
-        contenu_fichier = descripteur_fichier.read()
-        descripteur_fichier.close()
-        return contenu_fichier
-
-    
-    @route('/verification', method='POST')
     def verification(self):
+        contenu_image_path = request.forms.get('image_path')
+        print("/"*25)
+        print(f"::: Image path: {contenu_image_path};")
+        print("/"*25)
+
+        commande_curl = subprocess.Popen(
+            f"curl -v -F image=@{contenu_image_path} --cacert ./src/cert/certCertifPlus/ecc.ca.cert.pem http://localhost:1234/faire_verification",
+            shell=True, stdout=subprocess.PIPE)
+        (resultat, _) = commande_curl.communicate()
+        print("Resultat", resultat,": Erreur", _)
+        return resultat
+        """
         try:
             contenu_image = request.files.get('image')
             print("Contenu image:", contenu_image)
@@ -82,16 +84,35 @@ class ServeurFrontal:
         except Exception as e:
             response.status = 500
             return f"Erreur lors de la vérification: {str(e)}"
+        """
 
 
     #@route('/creation', method='POST')
     def creation(self):
         # Récupération des informations
         contenu_email = request.forms.get('email')
-        nom_etudiant: str = contenu_email.split(".")[0]
-        prenom_etudiant: str = contenu_email.split(".")[1].split("@")[0]
         contenu_intitulé_certification = request.forms.get('intitule_certif')
         contenu_mot_de_passe = request.forms.get('mdp')
+
+        print(f"::: Email: {contenu_email}; Intitulé Certification: {contenu_intitulé_certification}; Mot de passe: {contenu_mot_de_passe}")
+        
+        commande_curl = subprocess.Popen(
+            f"curl -v -X POST -d 'email={contenu_email}' -d 'intitule_certif={contenu_intitulé_certification}' -d 'mdp={contenu_mot_de_passe}' --cacert ./src/cert/certCertifPlus/ecc.ca.cert.pem http://localhost:1234/faire_creation",
+            shell=True, stdout=subprocess.PIPE)
+        (resultat, _) = commande_curl.communicate()
+        # print(resultat, _)
+        # sleep(5)
+        
+        if resultat.decode() == "Mot de passe ou nom de l'utilisateur incorrect":
+            return None
+        
+        commande_curl = subprocess.Popen(
+            f'curl -v -X GET --cacert ./src/cert/certCertifPlus/ecc.ca.cert.pem http://localhost:1234/recuperation_fond',
+            shell=True, stdout=subprocess.PIPE)
+        (resultat, _) = commande_curl.communicate()
+
+        return resultat
+        """
         etudiant_actuel: Etudiant = Etudiant(nom_etudiant, prenom_etudiant, Certificat(contenu_intitulé_certification))
 
         # Le SSO ne fonctionne plus depuis le 2FA (Top !!)
@@ -106,12 +127,10 @@ class ServeurFrontal:
             response.set_header('Content-type', 'text/plain')
             return "ok!"
         
-        return "Mot de passe ou nom de l'utilisateur incorrecte"
+        return "Mot de passe ou nom de l'utilisateur incorrect"
         
         self.serveur_applicatif.creation_certificat(etudiant_actuel)
-
-    def extraire_intitule_du_bloc(self, bloc_info):
-        return "" #TODO voir si on dois extraire les infos et is oui i faut un separateur
+        """
 
 
 if __name__ == "__main__":
