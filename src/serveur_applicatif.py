@@ -12,9 +12,8 @@ from unidecode import unidecode
 
 
 class ServeurApplicatif:
-    def __init__(self, steganographie: Steganographie, cle_privee: str):
+    def __init__(self, steganographie: Steganographie):
         self.stegano = steganographie
-        self.cle_privee = cle_privee
 
     def obtenir_timestamp(self, nom_certificat: str):
         """
@@ -250,7 +249,7 @@ if __name__ == "__main__":
     # Taille fichier .tsq: 91 octets
     # signature="chatouille"
     stegano: Steganographie = Steganographie()
-    serveur_app = ServeurApplicatif(stegano, "Iscia")
+    serveur_app = ServeurApplicatif(stegano)
 
     # print(serveur_app.creer_qrcode(signature))
 

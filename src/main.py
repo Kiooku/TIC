@@ -11,7 +11,7 @@ from PIL import Image
 from time import sleep
 
 steganographie: Steganographie = Steganographie()
-serveur_applicatif: ServeurApplicatif = ServeurApplicatif(steganographie, "TODO supprimer ?")
+serveur_applicatif: ServeurApplicatif = ServeurApplicatif(steganographie)
 communication_serveur_applicatif: CommunicationServeurApplicatif = CommunicationServeurApplicatif(serveur_applicatif)
 serveur_frontal: ServeurFrontal = ServeurFrontal()
 etudiant: Etudiant = Etudiant("Chat-ouille", "Latte", Certificat("Certificat de beauté ultime"))
