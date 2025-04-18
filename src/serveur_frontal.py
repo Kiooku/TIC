@@ -1,8 +1,4 @@
 from bottle import Bottle, route, run, template, request, response
-import urllib.request
-import urllib.parse
-import re
-import sys
 import datetime
 import subprocess
 
@@ -23,27 +19,6 @@ class ServeurFrontal:
 
     def demarrer(self):
         self.app.run(host='127.0.0.1',port=8080,debug=True)
-
-
-    def contacter_sso_universite(self, email: str, mdp: str) -> list:
-        re_token = re.compile(rb'name="token" value="([^"]+)"')
-        request = urllib.request.Request('https://cas.unilim.fr')
-        rep = urllib.request.urlopen(request)
-        contenu = rep.read()
-        resultat = re_token.search(contenu)
-        if resultat:
-            token = resultat.group(1)
-            print(token)
-        else:
-            sys.exit(1)
-        cookieProcessor = urllib.request.HTTPCookieProcessor()
-        opener = urllib.request.build_opener(cookieProcessor)
-        data = urllib.parse.urlencode({'user':email,'password':mdp,'token':token})
-
-        request = urllib.request.Request('https://cas.unilim.fr',bytes(data,encoding='ascii'))
-        reponse = opener.open(request)
-        cookies = [c for c in cookieProcessor.cookiejar if c.name=='lemonldap']
-        return cookies
 
 
     def verification(self):

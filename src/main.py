@@ -26,7 +26,7 @@ t2.start()
 sleep(1)
 input("Commencer ?")
 
-certificat = etudiant.demander_certificat("TODO")
+certificat = etudiant.demander_certificat("MonSuperMdp")
 print(certificat)
 certificat.save("test.png")
 

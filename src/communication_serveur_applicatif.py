@@ -2,6 +2,10 @@ from serveur_applicatif import ServeurApplicatif
 from etudiant import Etudiant
 from certificat import Certificat
 from bottle import Bottle, route, run, template, request, response
+import urllib.request
+import urllib.parse
+import re
+import sys
 
 class CommunicationServeurApplicatif:
     def __init__(self, serveur_applicatif: ServeurApplicatif):
@@ -18,6 +22,30 @@ class CommunicationServeurApplicatif:
 
     def demarrer(self):
         self.app.run(host='127.0.0.1',port=1234,debug=True)
+
+    
+    def contacter_sso_universite(self, email: str, mdp: str) -> list:
+        re_token = re.compile(rb'name="token" value="([^"]+)"')
+        request = urllib.request.Request('https://cas.unilim.fr')
+        rep = urllib.request.urlopen(request)
+        contenu = rep.read()
+        resultat = re_token.search(contenu)
+        print("*"*25)
+        print(email, mdp)
+        print("*"*25)
+        if resultat:
+            token = resultat.group(1)
+            print(token)
+        else:
+            sys.exit(1)
+        cookieProcessor = urllib.request.HTTPCookieProcessor()
+        opener = urllib.request.build_opener(cookieProcessor)
+        data = urllib.parse.urlencode({'user':email,'password':mdp,'token':token})
+
+        request = urllib.request.Request('https://cas.unilim.fr',bytes(data,encoding='ascii'))
+        reponse = opener.open(request)
+        cookies = [c for c in cookieProcessor.cookiejar if c.name=='lemonldap']
+        return cookies
 
     
     def recuperer_fond(self):
@@ -65,6 +93,9 @@ class CommunicationServeurApplicatif:
         
         # Vérification de l'étudiant avec le SSO de l'université
         cookies: list = self.contacter_sso_universite(contenu_email, contenu_mot_de_passe)
+        print("="*25)
+        print(cookies)
+        print("="*25)
         if cookies:
             # Intéraction avec le serveur d'application
             self.serveur_applicatif.creation_certificat(etudiant_actuel)
