@@ -62,7 +62,7 @@ class CommunicationServeurApplicatif:
         etudiant_actuel: Etudiant = Etudiant(nom_etudiant, prenom_etudiant, Certificat(contenu_intitulé_certification))
         
         # Le SSO ne fonctionne plus depuis le 2FA (Top !!) - Sauf avec eduroam
-        """
+        
         # Vérification de l'étudiant avec le SSO de l'université
         cookies: list = self.contacter_sso_universite(contenu_email, contenu_mot_de_passe)
         if cookies:
@@ -74,6 +74,6 @@ class CommunicationServeurApplicatif:
             return "ok!"
         
         return "Mot de passe ou nom de l'utilisateur incorrect"
-        """
-        self.serveur_applicatif.creation_certificat(etudiant_actuel)
-        return "ok!"
+        
+        #self.serveur_applicatif.creation_certificat(etudiant_actuel)
+        #return "ok!"
